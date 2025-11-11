@@ -1,24 +1,24 @@
 import nodemailer from 'nodemailer';
 
-// Initialize nodemailer transporter with Zoho SMTP
+// Initialize nodemailer transporter with ZeptoMail SMTP
 const getTransporter = () => {
-  const smtpUser = process.env.ZOHO_SMTP_USER;
-  const smtpPass = process.env.ZOHO_SMTP_PASS;
-  const smtpHost = process.env.ZOHO_SMTP_HOST || 'smtp.zoho.com';
-  const smtpPort = process.env.ZOHO_SMTP_PORT || '587';
+  const zeptoApiKey = process.env.ZEPTOMAIL_API_KEY;
+  const smtpPort = process.env.ZEPTOMAIL_SMTP_PORT || '587';
 
-  if (!smtpUser || !smtpPass) {
-    console.warn('Zoho SMTP credentials not configured. Emails will not be sent.');
+  if (!zeptoApiKey) {
+    console.warn('ZeptoMail API key not configured. Emails will not be sent.');
     return null;
   }
 
+  console.log('ZeptoMail transporter configured successfully');
+  
   return nodemailer.createTransport({
-    host: smtpHost,
+    host: 'smtp.zeptomail.com',
     port: parseInt(smtpPort, 10),
     secure: parseInt(smtpPort, 10) === 465, // true for 465, false for other ports
     auth: {
-      user: smtpUser,
-      pass: smtpPass,
+      user: 'emailapikey', // ZeptoMail uses this fixed username
+      pass: zeptoApiKey, // Your ZeptoMail API key
     },
   });
 };
@@ -34,8 +34,8 @@ export const sendContactEmail = async (contactData) => {
       return;
     }
 
-    const fromEmail = process.env.ZOHO_SMTP_USER || 'no-reply@yatindia.com';
-    const toEmail = 'diya.p.shiju@gmail.com';
+    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
+    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
     const logoUrl = process.env.LOGO_URL || 'https://res.cloudinary.com/dyjdyw646/image/upload/v1724252413/logo_bg_white_kp2jx9.png';
 
     const emailContent = `
@@ -84,9 +84,12 @@ export const sendContactEmail = async (contactData) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('Contact email sent successfully');
+    console.log('✅ Contact email sent successfully to:', toEmail);
   } catch (error) {
-    console.error('Error sending contact email:', error);
+    console.error('❌ Error sending contact email:', error.message);
+    if (error.response) {
+      console.error('ZeptoMail API response:', error.response);
+    }
     // Don't throw error - we don't want email failures to break form submission
   }
 };
@@ -102,8 +105,8 @@ export const sendProjectEmail = async (projectData) => {
       return;
     }
 
-    const fromEmail = process.env.ZOHO_SMTP_USER || 'no-reply@yatindia.com';
-    const toEmail = 'diya.p.shiju@gmail.com';
+    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
+    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
     const logoUrl = process.env.LOGO_URL || 'https://res.cloudinary.com/dyjdyw646/image/upload/v1724252413/logo_bg_white_kp2jx9.png';
 
     const servicesList = projectData.services && projectData.services.length > 0
@@ -198,9 +201,12 @@ export const sendProjectEmail = async (projectData) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('Project email sent successfully');
+    console.log('✅ Project email sent successfully to:', toEmail);
   } catch (error) {
-    console.error('Error sending project email:', error);
+    console.error('❌ Error sending project email:', error.message);
+    if (error.response) {
+      console.error('ZeptoMail API response:', error.response);
+    }
     // Don't throw error - we don't want email failures to break form submission
   }
 };
@@ -216,8 +222,8 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
       return;
     }
 
-    const fromEmail = process.env.ZOHO_SMTP_USER || 'no-reply@yatindia.com';
-    const toEmail = 'diya.p.shiju@gmail.com';
+    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
+    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
     const logoUrl = process.env.LOGO_URL || 'https://res.cloudinary.com/dyjdyw646/image/upload/v1724252413/logo_bg_white_kp2jx9.png';
 
     const emailContent = `
@@ -274,9 +280,12 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('Career email sent successfully');
+    console.log('✅ Career email sent successfully to:', toEmail);
   } catch (error) {
-    console.error('Error sending career email:', error);
+    console.error('❌ Error sending career email:', error.message);
+    if (error.response) {
+      console.error('ZeptoMail API response:', error.response);
+    }
     // Don't throw error - we don't want email failures to break form submission
   }
 };
