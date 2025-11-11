@@ -54,29 +54,47 @@ const sendZeptoMail = async (subject, htmlContent, toEmail = null) => {
     const config = getZeptoMailConfig();
     const recipientEmail = toEmail || config.toEmail;
 
+    // Log the request for debugging (without sensitive data)
+    console.log('📧 Sending email via ZeptoMail REST API...');
+    console.log(`   To: ${recipientEmail}`);
+    console.log(`   From: ${config.fromEmail}`);
+    console.log(`   Subject: ${subject.substring(0, 50)}${subject.length > 50 ? '...' : ''}`);
+    console.log(`   API Key (first 10 chars): ${config.apiKey.substring(0, 10)}...`);
+
+    const requestBody = {
+      bounce_address: config.fromEmail,
+      from: {
+        address: config.fromEmail,
+        name: 'YAT India',
+      },
+      to: [
+        {
+          email_address: {
+            address: recipientEmail,
+          },
+        },
+      ],
+      subject: subject,
+      htmlbody: htmlContent,
+    };
+
+    console.log('📤 Request body structure:', JSON.stringify({
+      bounce_address: requestBody.bounce_address,
+      from: requestBody.from,
+      to: requestBody.to,
+      subject: requestBody.subject,
+      htmlbody_length: requestBody.htmlbody.length,
+    }, null, 2));
+
     const response = await axios.post(
       config.apiUrl,
-      {
-        bounce_address: config.fromEmail,
-        from: {
-          address: config.fromEmail,
-          name: 'YAT India',
-        },
-        to: [
-          {
-            email_address: {
-              address: recipientEmail,
-            },
-          },
-        ],
-        subject: subject,
-        htmlbody: htmlContent,
-      },
+      requestBody,
       {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Zoho-enczapikey ${config.apiKey}`,
         },
+        timeout: 30000,
       }
     );
 
@@ -86,8 +104,29 @@ const sendZeptoMail = async (subject, htmlContent, toEmail = null) => {
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
-      console.error('❌ ZeptoMail API error response:', error.response.status, error.response.data);
-      throw new Error(`ZeptoMail API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      console.error('❌ ZeptoMail API error response:');
+      console.error('   Status:', error.response.status);
+      console.error('   Status Text:', error.response.statusText);
+      console.error('   Headers:', JSON.stringify(error.response.headers, null, 2));
+      console.error('   Data Type:', typeof error.response.data);
+      console.error('   Data:', error.response.data);
+      console.error('   Data (stringified):', JSON.stringify(error.response.data, null, 2));
+      
+      // Try to extract more details
+      let errorMessage = `ZeptoMail API error: ${error.response.status}`;
+      if (error.response.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage += ` - ${error.response.data}`;
+        } else if (error.response.data.message) {
+          errorMessage += ` - ${error.response.data.message}`;
+        } else if (error.response.data.error) {
+          errorMessage += ` - ${error.response.data.error}`;
+        } else {
+          errorMessage += ` - ${JSON.stringify(error.response.data)}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
     } else if (error.request) {
       // The request was made but no response was received
       console.error('❌ ZeptoMail API no response:', error.request);
