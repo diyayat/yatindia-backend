@@ -45,27 +45,81 @@ app.get('/api/health', (req, res) => {
 });
 
 // Email configuration diagnostic route (for debugging)
-app.get('/api/email/check', (req, res) => {
+app.get('/api/email/check', async (req, res) => {
   const zeptoApiKey = process.env.ZEPTOMAIL_API_KEY;
   const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS;
   const toEmail = process.env.ZEPTOMAIL_TO_EMAIL;
-  const smtpPort = process.env.ZEPTOMAIL_SMTP_PORT || '587';
   
   const config = {
     zeptoApiKey: zeptoApiKey ? `${zeptoApiKey.substring(0, 8)}...` : '❌ NOT SET',
     fromEmail: fromEmail || '⚠️  NOT SET (will use default: no-reply@yatindia.com)',
     toEmail: toEmail || '⚠️  NOT SET (will use default: diya.p.shiju@gmail.com)',
-    smtpPort: smtpPort,
-    host: 'smtp.zeptomail.com',
+    apiUrl: 'https://api.zeptomail.com/v1.1/email',
+    method: 'REST API',
     status: zeptoApiKey ? '✅ Configured' : '❌ Missing ZEPTOMAIL_API_KEY',
   };
+
+  // Test REST API connection if API key is set
+  let connectionTest = null;
+  if (zeptoApiKey) {
+    try {
+      const axios = (await import('axios')).default;
+      const testResponse = await axios.post(
+        'https://api.zeptomail.com/v1.1/email',
+        {
+          bounce_address: fromEmail || 'no-reply@yatindia.com',
+          from: {
+            address: fromEmail || 'no-reply@yatindia.com',
+            name: 'YAT India Test',
+          },
+          to: [
+            {
+              email_address: {
+                address: toEmail || 'diya.p.shiju@gmail.com',
+              },
+            },
+          ],
+          subject: 'Test Email - Configuration Check',
+          htmlbody: '<p>This is a test email to verify ZeptoMail REST API configuration.</p>',
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Zoho-enczapikey ${zeptoApiKey}`,
+          },
+        }
+      );
+
+      connectionTest = {
+        success: true,
+        message: '✅ ZeptoMail REST API connection successful',
+      };
+    } catch (error) {
+      if (error.response) {
+        connectionTest = {
+          success: false,
+          message: `❌ ZeptoMail API error: ${error.response.status} ${error.response.statusText}`,
+          errorDetails: error.response.data,
+          suggestion: 'Check your API key and verify it in ZeptoMail dashboard',
+        };
+      } else {
+        connectionTest = {
+          success: false,
+          message: `❌ Connection test failed: ${error.message}`,
+          errorCode: error.code,
+          suggestion: 'Check your network connection and API endpoint accessibility',
+        };
+      }
+    }
+  }
   
   res.json({
-    success: !!zeptoApiKey,
+    success: !!zeptoApiKey && (!connectionTest || connectionTest.success),
     message: zeptoApiKey 
-      ? 'Email configuration looks good!' 
+      ? (connectionTest?.success ? 'Email configuration looks good!' : connectionTest?.message)
       : 'Email configuration is incomplete. ZEPTOMAIL_API_KEY is required.',
     config: config,
+    connectionTest: connectionTest,
     environment: process.env.NODE_ENV || 'development',
   });
 });

@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import axios from 'axios';
 
 // Timeline options mapping
 const timelineOptions = {
@@ -14,10 +14,9 @@ const getTimelineLabel = (value) => {
   return timelineOptions[value] || value;
 };
 
-// Initialize nodemailer transporter with ZeptoMail SMTP
-const getTransporter = () => {
+// ZeptoMail REST API configuration
+const getZeptoMailConfig = () => {
   const zeptoApiKey = process.env.ZEPTOMAIL_API_KEY;
-  const smtpPort = process.env.ZEPTOMAIL_SMTP_PORT || '587';
 
   if (!zeptoApiKey) {
     const errorMsg = '❌ ZeptoMail API key (ZEPTOMAIL_API_KEY) not configured in environment variables. Emails will not be sent.';
@@ -31,19 +30,74 @@ const getTransporter = () => {
     console.warn('⚠️  ZEPTOMAIL_FROM_EMAIL or ZEPTOMAIL_BOUNCE_ADDRESS not set. Using default: no-reply@yatindia.com');
   }
 
-  console.log('✅ ZeptoMail transporter configured successfully');
-  console.log(`   From Email: ${fromEmail || 'no-reply@yatindia.com (default)'}`);
-  console.log(`   SMTP Port: ${smtpPort}`);
-  
-  return nodemailer.createTransport({
-    host: 'smtp.zeptomail.com',
-    port: parseInt(smtpPort, 10),
-    secure: parseInt(smtpPort, 10) === 465, // true for 465, false for other ports
-    auth: {
-      user: 'emailapikey', // ZeptoMail uses this fixed username
-      pass: zeptoApiKey, // Your ZeptoMail API key
-    },
-  });
+  const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
+  const fromAddress = fromEmail || 'no-reply@yatindia.com';
+
+  console.log('✅ ZeptoMail REST API configured successfully');
+  console.log(`   From Email: ${fromAddress}`);
+  console.log(`   To Email: ${toEmail}`);
+  console.log(`   API Endpoint: https://api.zeptomail.com/v1.1/email`);
+
+  return {
+    apiKey: zeptoApiKey,
+    fromEmail: fromAddress,
+    toEmail: toEmail,
+    apiUrl: 'https://api.zeptomail.com/v1.1/email',
+  };
+};
+
+/**
+ * Send email using ZeptoMail REST API
+ */
+const sendZeptoMail = async (subject, htmlContent, toEmail = null) => {
+  try {
+    const config = getZeptoMailConfig();
+    const recipientEmail = toEmail || config.toEmail;
+
+    const response = await axios.post(
+      config.apiUrl,
+      {
+        bounce_address: config.fromEmail,
+        from: {
+          address: config.fromEmail,
+          name: 'YAT India',
+        },
+        to: [
+          {
+            email_address: {
+              address: recipientEmail,
+            },
+          },
+        ],
+        subject: subject,
+        htmlbody: htmlContent,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Zoho-enczapikey ${config.apiKey}`,
+        },
+      }
+    );
+
+    console.log('✅ ZeptoMail API response:', response.data);
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('❌ ZeptoMail API error response:', error.response.status, error.response.data);
+      throw new Error(`ZeptoMail API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('❌ ZeptoMail API no response:', error.request);
+      throw new Error('ZeptoMail API: No response received from server');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('❌ Error sending email via ZeptoMail REST API:', error.message);
+      throw error;
+    }
+  }
 };
 
 /**
@@ -51,19 +105,10 @@ const getTransporter = () => {
  */
 export const sendContactEmail = async (contactData) => {
   try {
-    const transporter = getTransporter();
-
-    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
-    // All form submissions go to admin email - NOT to the user
-    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
-    // Use Cloudinary logo URL if available, otherwise use public folder
+    const config = getZeptoMailConfig();
+    // Use Cloudinary logo URL if available
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
-      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
-      (() => {
-        const backendUrl = process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:4173';
-        const logoFileName = encodeURIComponent('YAT INDIA LOGO UPDATED.png');
-        return `${backendUrl}/public/${logoFileName}`;
-      })();
+      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png';
 
     const emailContent = `
       <!DOCTYPE html>
@@ -103,27 +148,11 @@ export const sendContactEmail = async (contactData) => {
       </html>
     `;
 
-    const mailOptions = {
-      from: fromEmail,
-      to: toEmail,
-      subject: 'New Contact Form Submission - Callback Request',
-      html: emailContent,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Contact email sent successfully to:', toEmail);
+    await sendZeptoMail('New Contact Form Submission - Callback Request', emailContent);
+    console.log('✅ Contact email sent successfully to:', config.toEmail);
   } catch (error) {
     console.error('❌ Error sending contact email:', error.message);
     console.error('Full error:', error);
-    if (error.response) {
-      console.error('ZeptoMail API response:', error.response);
-    }
-    if (error.code) {
-      console.error('Error code:', error.code);
-    }
-    if (error.command) {
-      console.error('Failed command:', error.command);
-    }
     // Don't throw error - we don't want email failures to break form submission
     // But log it clearly for debugging
   }
@@ -134,19 +163,10 @@ export const sendContactEmail = async (contactData) => {
  */
 export const sendProjectEmail = async (projectData) => {
   try {
-    const transporter = getTransporter();
-
-    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
-    // All form submissions go to admin email - NOT to the user
-    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
-    // Use Cloudinary logo URL if available, otherwise use public folder
+    const config = getZeptoMailConfig();
+    // Use Cloudinary logo URL if available
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
-      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
-      (() => {
-        const backendUrl = process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:4173';
-        const logoFileName = encodeURIComponent('YAT INDIA LOGO UPDATED.png');
-        return `${backendUrl}/public/${logoFileName}`;
-      })();
+      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png';
 
     const servicesList = projectData.services && projectData.services.length > 0
       ? projectData.services.map(s => `<li style="margin: 5px 0;">${s}</li>`).join('')
@@ -232,27 +252,11 @@ export const sendProjectEmail = async (projectData) => {
       </html>
     `;
 
-    const mailOptions = {
-      from: fromEmail,
-      to: toEmail,
-      subject: `New Project Inquiry - ${projectData.name}`,
-      html: emailContent,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Project email sent successfully to:', toEmail);
+    await sendZeptoMail(`New Project Inquiry - ${projectData.name}`, emailContent);
+    console.log('✅ Project email sent successfully to:', config.toEmail);
   } catch (error) {
     console.error('❌ Error sending project email:', error.message);
     console.error('Full error:', error);
-    if (error.response) {
-      console.error('ZeptoMail API response:', error.response);
-    }
-    if (error.code) {
-      console.error('Error code:', error.code);
-    }
-    if (error.command) {
-      console.error('Failed command:', error.command);
-    }
     // Don't throw error - we don't want email failures to break form submission
     // But log it clearly for debugging
   }
@@ -263,19 +267,10 @@ export const sendProjectEmail = async (projectData) => {
  */
 export const sendCareerEmail = async (careerData, resumePath = null) => {
   try {
-    const transporter = getTransporter();
-
-    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
-    // All form submissions go to admin email - NOT to the user
-    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
-    // Use Cloudinary logo URL if available, otherwise use public folder
+    const config = getZeptoMailConfig();
+    // Use Cloudinary logo URL if available
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
-      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
-      (() => {
-        const backendUrl = process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:4173';
-        const logoFileName = encodeURIComponent('YAT INDIA LOGO UPDATED.png');
-        return `${backendUrl}/public/${logoFileName}`;
-      })();
+      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png';
 
     const emailContent = `
       <!DOCTYPE html>
@@ -307,10 +302,11 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
               <div style="white-space: pre-wrap; color: #666;">${careerData.message}</div>
             </div>
 
-            ${resumePath ? `
+            ${resumePath || careerData.resumeUrl ? `
             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
               <h3 style="color: #667eea; margin-top: 0;">Resume</h3>
               <div>Resume has been uploaded: <strong>${careerData.resumeFileName || 'File attached'}</strong></div>
+              ${careerData.resumeUrl ? `<div style="margin-top: 10px;"><a href="${careerData.resumeUrl}" style="color: #667eea;">View Resume</a></div>` : ''}
             </div>
             ` : ''}
 
@@ -323,27 +319,14 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
       </html>
     `;
 
-    const mailOptions = {
-      from: fromEmail,
-      to: toEmail,
-      subject: `New Career Application - ${careerData.name}${careerData.position ? ` (${careerData.position})` : ''}`,
-      html: emailContent,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Career email sent successfully to:', toEmail);
+    await sendZeptoMail(
+      `New Career Application - ${careerData.name}${careerData.position ? ` (${careerData.position})` : ''}`,
+      emailContent
+    );
+    console.log('✅ Career email sent successfully to:', config.toEmail);
   } catch (error) {
     console.error('❌ Error sending career email:', error.message);
     console.error('Full error:', error);
-    if (error.response) {
-      console.error('ZeptoMail API response:', error.response);
-    }
-    if (error.code) {
-      console.error('Error code:', error.code);
-    }
-    if (error.command) {
-      console.error('Failed command:', error.command);
-    }
     // Don't throw error - we don't want email failures to break form submission
     // But log it clearly for debugging
   }
@@ -354,13 +337,9 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
  */
 export const sendLeadEmail = async (leadData, leadType) => {
   try {
-    const transporter = getTransporter();
-
-    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
-    const toEmail = 'diya.p.shiju@gmail.com';
+    const config = getZeptoMailConfig();
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
-      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
-      'http://localhost:4173/public/YAT INDIA LOGO UPDATED.png';
+      'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png';
 
     let emailContent = '';
     let subject = '';
@@ -516,27 +495,11 @@ export const sendLeadEmail = async (leadData, leadType) => {
       `;
     }
 
-    const mailOptions = {
-      from: fromEmail,
-      to: toEmail,
-      subject: subject,
-      html: emailContent,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Lead email sent successfully to:', toEmail);
+    await sendZeptoMail(subject, emailContent);
+    console.log('✅ Lead email sent successfully to:', config.toEmail);
   } catch (error) {
     console.error('❌ Error sending lead email:', error.message);
     console.error('Full error:', error);
-    if (error.response) {
-      console.error('ZeptoMail API response:', error.response);
-    }
-    if (error.code) {
-      console.error('Error code:', error.code);
-    }
-    if (error.command) {
-      console.error('Failed command:', error.command);
-    }
     throw error; // Re-throw for controller to handle
   }
 };

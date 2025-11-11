@@ -1,5 +1,9 @@
 # Email Troubleshooting Guide
 
+## ✅ Using ZeptoMail REST API
+
+Your email service now uses **ZeptoMail REST API** instead of SMTP. This bypasses firewall/network restrictions and is more reliable.
+
 ## Why emails work on localhost but not on server?
 
 This is almost always due to **missing environment variables** on your production server.
@@ -60,23 +64,75 @@ After deploying, check your server logs for:
 
 ---
 
-### 4. 🌐 Network/Firewall Issues
+### 4. 🌐 REST API vs SMTP (Now Using REST API)
 
-Some hosting platforms block SMTP ports. If you see connection errors:
+**Current Setup:** Your email service uses ZeptoMail REST API, which:
+- ✅ Bypasses SMTP firewall restrictions
+- ✅ Works on all hosting platforms
+- ✅ More reliable than SMTP
+- ✅ No port configuration needed
 
-**Try port 465 (SSL):**
+**No SMTP configuration needed** - just set `ZEPTOMAIL_API_KEY`!
+
+---
+
+### 5. 🌐 Network/Firewall Issues - Connection Timeout (ETIMEDOUT) - OLD (SMTP)
+
+**Symptom:** `Error: Connection timeout` or `ETIMEDOUT` error code
+
+**This means:** Your server cannot connect to ZeptoMail's SMTP server. This is usually a firewall/network restriction.
+
+**Solutions (try in order):**
+
+#### Solution 1: Try Port 465 (SSL) instead of 587
+Some hosting platforms block port 587 but allow 465:
+
 ```env
 ZEPTOMAIL_SMTP_PORT=465
 ```
 
-**Or port 587 (TLS):**
-```env
-ZEPTOMAIL_SMTP_PORT=587
+Then restart your server.
+
+#### Solution 2: Check Hosting Platform SMTP Restrictions
+
+**Railway:**
+- Railway allows SMTP connections by default
+- If blocked, contact Railway support
+
+**Render:**
+- Render blocks SMTP port 25 by default
+- Ports 587 and 465 should work
+- If not, you may need to use a different email service
+
+**Vercel:**
+- Vercel serverless functions may have network restrictions
+- Consider using ZeptoMail's REST API instead of SMTP
+
+**VPS/Cloud Providers:**
+- Check firewall rules: `sudo ufw status`
+- Allow outbound connections on port 587 or 465
+- Some providers block SMTP by default
+
+#### Solution 3: Use ZeptoMail REST API (Alternative)
+
+If SMTP is blocked, you can use ZeptoMail's REST API instead. This requires code changes but bypasses SMTP restrictions.
+
+#### Solution 4: Test Connection from Server
+
+SSH into your server and test:
+```bash
+# Test if port 587 is accessible
+telnet smtp.zeptomail.com 587
+
+# Or test with openssl
+openssl s_client -connect smtp.zeptomail.com:587 -starttls smtp
 ```
+
+If these fail, your server cannot reach ZeptoMail's SMTP server.
 
 ---
 
-### 5. 🔐 Environment Variables Not Loading
+### 6. 🔐 Environment Variables Not Loading
 
 **Railway/Render/Vercel:**
 - Make sure variables are set in the dashboard
