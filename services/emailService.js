@@ -1,16 +1,39 @@
 import nodemailer from 'nodemailer';
 
+// Timeline options mapping
+const timelineOptions = {
+  "asap": "ASAP",
+  "1-2": "1-2 months",
+  "3-4": "3-4 months",
+  "5-6": "5-6 months",
+  "6+": "6+ months",
+  "flexible": "Flexible",
+};
+
+const getTimelineLabel = (value) => {
+  return timelineOptions[value] || value;
+};
+
 // Initialize nodemailer transporter with ZeptoMail SMTP
 const getTransporter = () => {
   const zeptoApiKey = process.env.ZEPTOMAIL_API_KEY;
   const smtpPort = process.env.ZEPTOMAIL_SMTP_PORT || '587';
 
   if (!zeptoApiKey) {
-    console.warn('ZeptoMail API key not configured. Emails will not be sent.');
-    return null;
+    const errorMsg = '❌ ZeptoMail API key (ZEPTOMAIL_API_KEY) not configured in environment variables. Emails will not be sent.';
+    console.error(errorMsg);
+    console.error('Please set ZEPTOMAIL_API_KEY in your production environment variables.');
+    throw new Error(errorMsg);
   }
 
-  console.log('ZeptoMail transporter configured successfully');
+  const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS;
+  if (!fromEmail) {
+    console.warn('⚠️  ZEPTOMAIL_FROM_EMAIL or ZEPTOMAIL_BOUNCE_ADDRESS not set. Using default: no-reply@yatindia.com');
+  }
+
+  console.log('✅ ZeptoMail transporter configured successfully');
+  console.log(`   From Email: ${fromEmail || 'no-reply@yatindia.com (default)'}`);
+  console.log(`   SMTP Port: ${smtpPort}`);
   
   return nodemailer.createTransport({
     host: 'smtp.zeptomail.com',
@@ -29,10 +52,6 @@ const getTransporter = () => {
 export const sendContactEmail = async (contactData) => {
   try {
     const transporter = getTransporter();
-    if (!transporter) {
-      console.warn('Email transporter not configured. Skipping email send.');
-      return;
-    }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
     // All form submissions go to admin email - NOT to the user
@@ -95,10 +114,18 @@ export const sendContactEmail = async (contactData) => {
     console.log('✅ Contact email sent successfully to:', toEmail);
   } catch (error) {
     console.error('❌ Error sending contact email:', error.message);
+    console.error('Full error:', error);
     if (error.response) {
       console.error('ZeptoMail API response:', error.response);
     }
+    if (error.code) {
+      console.error('Error code:', error.code);
+    }
+    if (error.command) {
+      console.error('Failed command:', error.command);
+    }
     // Don't throw error - we don't want email failures to break form submission
+    // But log it clearly for debugging
   }
 };
 
@@ -108,10 +135,6 @@ export const sendContactEmail = async (contactData) => {
 export const sendProjectEmail = async (projectData) => {
   try {
     const transporter = getTransporter();
-    if (!transporter) {
-      console.warn('Email transporter not configured. Skipping email send.');
-      return;
-    }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
     // All form submissions go to admin email - NOT to the user
@@ -171,7 +194,7 @@ export const sendProjectEmail = async (projectData) => {
 
             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
               <h3 style="color: #667eea; margin-top: 0;">Timeline</h3>
-              <div>${projectData.timeline}</div>
+              <div>${getTimelineLabel(projectData.timeline)}</div>
             </div>
 
             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
@@ -220,10 +243,18 @@ export const sendProjectEmail = async (projectData) => {
     console.log('✅ Project email sent successfully to:', toEmail);
   } catch (error) {
     console.error('❌ Error sending project email:', error.message);
+    console.error('Full error:', error);
     if (error.response) {
       console.error('ZeptoMail API response:', error.response);
     }
+    if (error.code) {
+      console.error('Error code:', error.code);
+    }
+    if (error.command) {
+      console.error('Failed command:', error.command);
+    }
     // Don't throw error - we don't want email failures to break form submission
+    // But log it clearly for debugging
   }
 };
 
@@ -233,10 +264,6 @@ export const sendProjectEmail = async (projectData) => {
 export const sendCareerEmail = async (careerData, resumePath = null) => {
   try {
     const transporter = getTransporter();
-    if (!transporter) {
-      console.warn('Email transporter not configured. Skipping email send.');
-      return;
-    }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
     // All form submissions go to admin email - NOT to the user
@@ -307,10 +334,18 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
     console.log('✅ Career email sent successfully to:', toEmail);
   } catch (error) {
     console.error('❌ Error sending career email:', error.message);
+    console.error('Full error:', error);
     if (error.response) {
       console.error('ZeptoMail API response:', error.response);
     }
+    if (error.code) {
+      console.error('Error code:', error.code);
+    }
+    if (error.command) {
+      console.error('Failed command:', error.command);
+    }
     // Don't throw error - we don't want email failures to break form submission
+    // But log it clearly for debugging
   }
 };
 
@@ -320,10 +355,6 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
 export const sendLeadEmail = async (leadData, leadType) => {
   try {
     const transporter = getTransporter();
-    if (!transporter) {
-      console.warn('Email transporter not configured. Skipping email send.');
-      return;
-    }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
     const toEmail = 'diya.p.shiju@gmail.com';
@@ -496,8 +527,15 @@ export const sendLeadEmail = async (leadData, leadType) => {
     console.log('✅ Lead email sent successfully to:', toEmail);
   } catch (error) {
     console.error('❌ Error sending lead email:', error.message);
+    console.error('Full error:', error);
     if (error.response) {
       console.error('ZeptoMail API response:', error.response);
+    }
+    if (error.code) {
+      console.error('Error code:', error.code);
+    }
+    if (error.command) {
+      console.error('Failed command:', error.command);
     }
     throw error; // Re-throw for controller to handle
   }

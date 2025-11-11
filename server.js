@@ -44,6 +44,32 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Email configuration diagnostic route (for debugging)
+app.get('/api/email/check', (req, res) => {
+  const zeptoApiKey = process.env.ZEPTOMAIL_API_KEY;
+  const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS;
+  const toEmail = process.env.ZEPTOMAIL_TO_EMAIL;
+  const smtpPort = process.env.ZEPTOMAIL_SMTP_PORT || '587';
+  
+  const config = {
+    zeptoApiKey: zeptoApiKey ? `${zeptoApiKey.substring(0, 8)}...` : '❌ NOT SET',
+    fromEmail: fromEmail || '⚠️  NOT SET (will use default: no-reply@yatindia.com)',
+    toEmail: toEmail || '⚠️  NOT SET (will use default: diya.p.shiju@gmail.com)',
+    smtpPort: smtpPort,
+    host: 'smtp.zeptomail.com',
+    status: zeptoApiKey ? '✅ Configured' : '❌ Missing ZEPTOMAIL_API_KEY',
+  };
+  
+  res.json({
+    success: !!zeptoApiKey,
+    message: zeptoApiKey 
+      ? 'Email configuration looks good!' 
+      : 'Email configuration is incomplete. ZEPTOMAIL_API_KEY is required.',
+    config: config,
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
