@@ -34,9 +34,14 @@ const getZeptoMailConfig = () => {
   const fromAddress = fromEmail || 'no-reply@yatindia.com';
 
   console.log('✅ ZeptoMail REST API configured successfully');
+  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`   From Email: ${fromAddress}`);
   console.log(`   To Email: ${toEmail}`);
+  console.log(`   API Key Length: ${zeptoApiKey.length} characters`);
+  console.log(`   API Key Prefix: ${zeptoApiKey.substring(0, 10)}...`);
   console.log(`   API Endpoint: https://api.zeptomail.com/v1.1/email`);
+  console.log(`   ZEPTOMAIL_FROM_EMAIL set: ${!!process.env.ZEPTOMAIL_FROM_EMAIL}`);
+  console.log(`   ZEPTOMAIL_BOUNCE_ADDRESS set: ${!!process.env.ZEPTOMAIL_BOUNCE_ADDRESS}`);
 
   return {
     apiKey: zeptoApiKey,
