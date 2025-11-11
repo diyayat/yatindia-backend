@@ -35,7 +35,15 @@ const careerSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  resumeUrl: {
+    type: String,
+    trim: true,
+  },
   resumeFileName: {
+    type: String,
+    trim: true,
+  },
+  resumePublicId: {
     type: String,
     trim: true,
   },

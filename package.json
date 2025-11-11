@@ -8,6 +8,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "build": "rm -rf dist && mkdir -p dist && find . -name '*.js' -not -path './node_modules/*' -not -path './dist/*' -exec node --check {} \\; && cp -r config controllers middleware models routes services server.js package.json dist/ && mkdir -p dist/resumes && echo 'Build successful - dist folder created'",
+    "upload-logo": "node scripts/uploadLogo.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,6 +21,7 @@
   "dependencies": {
     "axios": "^1.6.2",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

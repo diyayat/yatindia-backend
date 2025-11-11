@@ -1,6 +1,6 @@
 import express from 'express';
 import { createCareer, getCareers, updateCareer, sendCareerLeadEmail } from '../controllers/careerController.js';
-import upload from '../middleware/upload.js';
+import upload, { uploadToCloudinaryMiddleware } from '../middleware/cloudinaryUpload.js';
 import { captchaMiddleware } from '../middleware/captcha.js';
 import { protect } from '../middleware/auth.js';
 import path from 'path';
@@ -14,12 +14,16 @@ const router = express.Router();
 
 // PUBLIC ROUTES (for website forms - no authentication required)
 // POST /api/career - Public: Website career form submission
-router.post('/', upload.single('resume'), captchaMiddleware, createCareer);
+// Upload to Cloudinary if configured, otherwise use local storage
+router.post('/', upload.single('resume'), uploadToCloudinaryMiddleware, captchaMiddleware, createCareer);
 
 // PROTECTED ROUTES (for admin dashboard only - authentication required)
 // GET /api/career - Protected: Admin dashboard - get all careers
 router.get('/', protect, getCareers);
 // GET /api/career/resume/:filename - Protected: Admin dashboard - serve resume files (must come before /:id)
+// Serve resume files (protected - admin dashboard only)
+// Note: If using Cloudinary, resumes are accessed via resumeUrl directly
+// This route is kept for backward compatibility with local storage
 router.get('/resume/:filename', protect, (req, res) => {
   try {
     const { filename } = req.params;
@@ -28,7 +32,7 @@ router.get('/resume/:filename', protect, (req, res) => {
     if (!fs.existsSync(resumePath)) {
       return res.status(404).json({
         success: false,
-        message: 'Resume file not found',
+        message: 'Resume file not found. If using Cloudinary, access via resumeUrl field.',
       });
     }
     

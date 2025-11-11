@@ -16,10 +16,19 @@ export const createCareer = async (req, res) => {
       });
     }
 
-    // Handle file upload
+    // Handle file upload - Cloudinary URL if uploaded, otherwise local path
+    let resumeUrl = null;
     let resumePath = null;
     let resumeFileName = null;
-    if (req.file) {
+    let resumePublicId = null;
+    
+    if (req.cloudinaryResult) {
+      // File uploaded to Cloudinary
+      resumeUrl = req.cloudinaryResult.url;
+      resumePublicId = req.cloudinaryResult.publicId;
+      resumeFileName = req.file.originalname;
+    } else if (req.file) {
+      // Fallback to local storage if Cloudinary is not configured
       resumePath = req.file.path;
       resumeFileName = req.file.filename;
     }
@@ -31,8 +40,10 @@ export const createCareer = async (req, res) => {
       position,
       experience,
       message,
-      resumePath,
+      resumePath, // Local path (if not using Cloudinary)
+      resumeUrl, // Cloudinary URL (if using Cloudinary)
       resumeFileName,
+      resumePublicId, // Cloudinary public ID (if using Cloudinary)
     });
 
     // Send email notification (non-blocking)
@@ -44,7 +55,8 @@ export const createCareer = async (req, res) => {
       experience,
       message,
       resumeFileName,
-    }, resumePath).catch(err => {
+      resumeUrl, // Pass Cloudinary URL or local path
+    }, resumeUrl || resumePath).catch(err => {
       console.error('Failed to send career email:', err);
     });
 
