@@ -1,0 +1,33 @@
+{
+  "name": "yatindia-backend",
+  "version": "1.0.0",
+  "description": "Backend API for YAT India website forms",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "rm -rf dist && mkdir -p dist && find . -name '*.js' -not -path './node_modules/*' -not -path './dist/*' -exec node --check {} \\; && cp -r config controllers middleware models routes services server.js package.json dist/ && mkdir -p dist/resumes && echo 'Build successful - dist folder created'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "yatindia",
+    "backend",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
