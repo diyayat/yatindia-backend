@@ -46,6 +46,10 @@ const careerSchema = new mongoose.Schema({
     enum: ['new', 'reviewed', 'shortlisted', 'interviewed', 'rejected', 'hired'],
     default: 'new',
   },
+  description: {
+    type: String,
+    trim: true,
+  },
 }, {
   timestamps: true,
 });

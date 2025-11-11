@@ -77,6 +77,10 @@ const projectSchema = new mongoose.Schema({
     enum: ['new', 'contacted', 'in-progress', 'completed', 'archived'],
     default: 'new',
   },
+  description: {
+    type: String,
+    trim: true,
+  },
 }, {
   timestamps: true,
 });

@@ -35,6 +35,7 @@ export const sendContactEmail = async (contactData) => {
     }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
+    // All form submissions go to admin email - NOT to the user
     const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
     const logoUrl = process.env.LOGO_URL || 'https://res.cloudinary.com/dyjdyw646/image/upload/v1724252413/logo_bg_white_kp2jx9.png';
 
@@ -106,6 +107,7 @@ export const sendProjectEmail = async (projectData) => {
     }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
+    // All form submissions go to admin email - NOT to the user
     const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
     const logoUrl = process.env.LOGO_URL || 'https://res.cloudinary.com/dyjdyw646/image/upload/v1724252413/logo_bg_white_kp2jx9.png';
 
@@ -223,6 +225,7 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
     }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
+    // All form submissions go to admin email - NOT to the user
     const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
     const logoUrl = process.env.LOGO_URL || 'https://res.cloudinary.com/dyjdyw646/image/upload/v1724252413/logo_bg_white_kp2jx9.png';
 
@@ -287,5 +290,192 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
       console.error('ZeptoMail API response:', error.response);
     }
     // Don't throw error - we don't want email failures to break form submission
+  }
+};
+
+/**
+ * Send email to admin about a lead
+ */
+export const sendLeadEmail = async (leadData, leadType) => {
+  try {
+    const transporter = getTransporter();
+    if (!transporter) {
+      console.warn('Email transporter not configured. Skipping email send.');
+      return;
+    }
+
+    const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
+    const toEmail = 'diya.p.shiju@gmail.com';
+    const logoUrl = process.env.LOGO_URL || 'https://res.cloudinary.com/dyjdyw646/image/upload/v1724252413/logo_bg_white_kp2jx9.png';
+
+    let emailContent = '';
+    let subject = '';
+
+    if (leadType === 'career') {
+      subject = `Lead Update - Career Application: ${leadData.name}`;
+      emailContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Lead Update - Career Application</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f0f0f0; font-family: Arial, sans-serif;">
+          <div style="width: 100%; max-width: 700px; margin: 0 auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+              <img src="${logoUrl}" alt="YAT India Logo" style="max-width: 200px; height: auto;" />
+            </div>
+            <div style="padding: 20px;">
+              <h2 style="color: #333; margin-top: 0;">Lead Update - Career Application</h2>
+              
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Applicant Information</h3>
+                <div style="margin-bottom: 10px;"><strong>Name:</strong> ${leadData.name}</div>
+                <div style="margin-bottom: 10px;"><strong>Email:</strong> ${leadData.email}</div>
+                <div style="margin-bottom: 10px;"><strong>Phone:</strong> ${leadData.phone}</div>
+                ${leadData.position ? `<div style="margin-bottom: 10px;"><strong>Position:</strong> ${leadData.position}</div>` : ''}
+                ${leadData.experience ? `<div style="margin-bottom: 10px;"><strong>Experience:</strong> ${leadData.experience}</div>` : ''}
+                <div style="margin-bottom: 10px;"><strong>Status:</strong> <span style="text-transform: capitalize; color: #667eea;">${leadData.status}</span></div>
+              </div>
+
+              ${leadData.description ? `
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Notes/Description</h3>
+                <div style="white-space: pre-wrap; color: #666;">${leadData.description}</div>
+              </div>
+              ` : ''}
+
+              ${leadData.message ? `
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Original Message</h3>
+                <div style="white-space: pre-wrap; color: #666;">${leadData.message}</div>
+              </div>
+              ` : ''}
+
+              <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <small style="color: #999;">Updated at: ${new Date().toLocaleString()}</small>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+    } else if (leadType === 'contact') {
+      subject = `Lead Update - Contact Request: ${leadData.name}`;
+      emailContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Lead Update - Contact Request</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f0f0f0; font-family: Arial, sans-serif;">
+          <div style="width: 100%; max-width: 700px; margin: 0 auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+              <img src="${logoUrl}" alt="YAT India Logo" style="max-width: 200px; height: auto;" />
+            </div>
+            <div style="padding: 20px;">
+              <h2 style="color: #333; margin-top: 0;">Lead Update - Contact Request</h2>
+              
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Contact Information</h3>
+                <div style="margin-bottom: 10px;"><strong>Name:</strong> ${leadData.name}</div>
+                <div style="margin-bottom: 10px;"><strong>Email:</strong> ${leadData.email}</div>
+                <div style="margin-bottom: 10px;"><strong>Phone:</strong> ${leadData.phone}</div>
+                <div style="margin-bottom: 10px;"><strong>Status:</strong> <span style="text-transform: capitalize; color: #667eea;">${leadData.status}</span></div>
+              </div>
+
+              ${leadData.description ? `
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Notes/Description</h3>
+                <div style="white-space: pre-wrap; color: #666;">${leadData.description}</div>
+              </div>
+              ` : ''}
+
+              <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <small style="color: #999;">Updated at: ${new Date().toLocaleString()}</small>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+    } else if (leadType === 'project') {
+      subject = `Lead Update - Project Inquiry: ${leadData.name}`;
+      const servicesList = leadData.services && leadData.services.length > 0
+        ? leadData.services.map(s => `<li style="margin: 5px 0;">${s}</li>`).join('')
+        : '<li style="margin: 5px 0;">None selected</li>';
+      
+      emailContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Lead Update - Project Inquiry</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f0f0f0; font-family: Arial, sans-serif;">
+          <div style="width: 100%; max-width: 700px; margin: 0 auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+              <img src="${logoUrl}" alt="YAT India Logo" style="max-width: 200px; height: auto;" />
+            </div>
+            <div style="padding: 20px;">
+              <h2 style="color: #333; margin-top: 0;">Lead Update - Project Inquiry</h2>
+              
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Contact Information</h3>
+                <div style="margin-bottom: 10px;"><strong>Name:</strong> ${leadData.name}</div>
+                <div style="margin-bottom: 10px;"><strong>Email:</strong> ${leadData.email}</div>
+                <div style="margin-bottom: 10px;"><strong>Phone:</strong> ${leadData.phone}</div>
+                ${leadData.company ? `<div style="margin-bottom: 10px;"><strong>Company:</strong> ${leadData.company}</div>` : ''}
+                <div style="margin-bottom: 10px;"><strong>Status:</strong> <span style="text-transform: capitalize; color: #667eea;">${leadData.status}</span></div>
+              </div>
+
+              ${leadData.description ? `
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Notes/Description</h3>
+                <div style="white-space: pre-wrap; color: #666;">${leadData.description}</div>
+              </div>
+              ` : ''}
+
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Services Required</h3>
+                <ul style="margin: 10px 0; padding-left: 20px;">${servicesList}</ul>
+              </div>
+
+              ${leadData.projectDescription ? `
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-top: 0;">Project Description</h3>
+                <div style="white-space: pre-wrap; color: #666;">${leadData.projectDescription}</div>
+              </div>
+              ` : ''}
+
+              <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <small style="color: #999;">Updated at: ${new Date().toLocaleString()}</small>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+    }
+
+    const mailOptions = {
+      from: fromEmail,
+      to: toEmail,
+      subject: subject,
+      html: emailContent,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Lead email sent successfully to:', toEmail);
+  } catch (error) {
+    console.error('❌ Error sending lead email:', error.message);
+    if (error.response) {
+      console.error('ZeptoMail API response:', error.response);
+    }
+    throw error; // Re-throw for controller to handle
   }
 };

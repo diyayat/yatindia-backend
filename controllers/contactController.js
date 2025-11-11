@@ -1,5 +1,5 @@
 import Contact from '../models/Contact.js';
-import { sendContactEmail } from '../services/emailService.js';
+import { sendContactEmail, sendLeadEmail } from '../services/emailService.js';
 
 // @desc    Create a new contact callback request
 // @route   POST /api/contact
@@ -59,6 +59,77 @@ export const getContacts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error. Please try again later.',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Update contact request status and description
+// @route   PUT /api/contact/:id
+// @access  Public (you may want to add authentication later)
+export const updateContact = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, description } = req.body;
+
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (description !== undefined) updateData.description = description;
+
+    const contact = await Contact.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!contact) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contact request not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Contact request updated successfully',
+      data: contact,
+    });
+  } catch (error) {
+    console.error('Error updating contact request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error. Please try again later.',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Send email to admin about a contact lead
+// @route   POST /api/contact/:id/send-email
+// @access  Public (you may want to add authentication later)
+export const sendContactLeadEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const contact = await Contact.findById(id);
+
+    if (!contact) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contact request not found',
+      });
+    }
+
+    await sendLeadEmail(contact.toObject(), 'contact');
+
+    res.status(200).json({
+      success: true,
+      message: 'Email sent successfully to admin',
+    });
+  } catch (error) {
+    console.error('Error sending lead email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send email. Please try again later.',
       error: error.message,
     });
   }

@@ -18,6 +18,16 @@ const contactSchema = new mongoose.Schema({
     required: [true, 'Phone number is required'],
     trim: true,
   },
+  // Status tracking
+  status: {
+    type: String,
+    enum: ['new', 'contacted', 'in-progress', 'completed', 'archived'],
+    default: 'new',
+  },
+  description: {
+    type: String,
+    trim: true,
+  },
 }, {
   timestamps: true,
 });
