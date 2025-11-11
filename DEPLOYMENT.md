@@ -26,11 +26,10 @@
 - `PORT` (auto-set by Railway)
 - `FRONTEND_URL`
 - `CLOUDFLARE_TURNSTILE_SECRET_KEY`
-- `ZOHO_SMTP_USER`
-- `ZOHO_SMTP_PASS`
-- `ZOHO_SMTP_HOST`
-- `ZOHO_SMTP_PORT`
-- `ZEPTOMAIL_TO_EMAIL`
+- `ZEPTOMAIL_API_KEY` ⚠️ **REQUIRED for emails**
+- `ZEPTOMAIL_FROM_EMAIL` or `ZEPTOMAIL_BOUNCE_ADDRESS` (recommended)
+- `ZEPTOMAIL_TO_EMAIL` (default: diya.p.shiju@gmail.com)
+- `ZEPTOMAIL_SMTP_PORT` (optional, default: 587)
 
 ---
 
@@ -135,11 +134,13 @@ PORT=5000
 MONGODB_URI=your_mongodb_connection_string
 FRONTEND_URL=https://your-frontend-domain.com
 CLOUDFLARE_TURNSTILE_SECRET_KEY=your_secret_key
-ZOHO_SMTP_USER=your_email@zoho.com
-ZOHO_SMTP_PASS=your_app_password
-ZOHO_SMTP_HOST=smtp.zoho.com
-ZOHO_SMTP_PORT=587
-ZEPTOMAIL_TO_EMAIL=info@yatindia.com
+
+# ZeptoMail Configuration (REQUIRED for emails)
+ZEPTOMAIL_API_KEY=your_zeptomail_api_key_here
+ZEPTOMAIL_FROM_EMAIL=your_verified_email@yourdomain.com
+ZEPTOMAIL_BOUNCE_ADDRESS=your_bounce_address@yourdomain.com
+ZEPTOMAIL_TO_EMAIL=diya.p.shiju@gmail.com
+ZEPTOMAIL_SMTP_PORT=587
 ```
 
 ---
