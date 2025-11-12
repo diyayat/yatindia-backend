@@ -91,20 +91,54 @@ const sendZeptoMail = async (subject, htmlContent, toEmail = null) => {
       htmlbody_length: requestBody.htmlbody.length,
     }, null, 2));
 
+    // Check for common API key issues
+    const apiKeyTrimmed = config.apiKey.trim();
+    if (apiKeyTrimmed !== config.apiKey) {
+      console.warn('⚠️  API key has leading/trailing whitespace - trimming it');
+    }
+    if (apiKeyTrimmed.length === 0) {
+      throw new Error('API key is empty after trimming');
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Zoho-enczapikey ${apiKeyTrimmed}`,
+    };
+
+    console.log('📤 Request headers:', {
+      'Content-Type': headers['Content-Type'],
+      'Authorization': `Zoho-enczapikey ${apiKeyTrimmed.substring(0, 10)}...`,
+      'URL': config.apiUrl,
+    });
+
     const response = await axios.post(
       config.apiUrl,
       requestBody,
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Zoho-enczapikey ${config.apiKey}`,
-        },
+        headers: headers,
         timeout: 30000,
+        validateStatus: function (status) {
+          // Don't throw for any status, we'll handle it manually
+          return status >= 200 && status < 600;
+        },
       }
     );
 
-    console.log('✅ ZeptoMail API response:', response.data);
-    return response.data;
+    // Check if response is successful
+    if (response.status >= 200 && response.status < 300) {
+      console.log('✅ ZeptoMail API response:', response.data);
+      return response.data;
+    } else {
+      // Handle non-2xx responses
+      throw {
+        response: {
+          status: response.status,
+          statusText: response.statusText,
+          data: response.data,
+          headers: response.headers,
+        },
+      };
+    }
   } catch (error) {
     if (error.response) {
       // The request was made and the server responded with a status code
@@ -116,6 +150,16 @@ const sendZeptoMail = async (subject, htmlContent, toEmail = null) => {
       console.error('   Data Type:', typeof error.response.data);
       console.error('   Data:', error.response.data);
       console.error('   Data (stringified):', JSON.stringify(error.response.data, null, 2));
+      
+      // If response is HTML, it might be an authentication/endpoint issue
+      const contentType = error.response.headers['content-type'] || '';
+      if (contentType.includes('text/html')) {
+        console.error('⚠️  Received HTML response instead of JSON - this usually means:');
+        console.error('   1. API key is invalid or expired');
+        console.error('   2. Authorization header format is wrong');
+        console.error('   3. API endpoint URL is incorrect');
+        console.error('   4. API key has IP/domain restrictions');
+      }
       
       // Try to extract more details
       let errorMessage = `ZeptoMail API error: ${error.response.status}`;

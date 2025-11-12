@@ -95,6 +95,7 @@ app.get('/api/email/check', async (req, res) => {
         message: '✅ ZeptoMail REST API connection successful',
       };
     } catch (error) {
+      console.log("error that is showing from zepto is ", error)
       if (error.response) {
         connectionTest = {
           success: false,
