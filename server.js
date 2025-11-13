@@ -59,8 +59,8 @@ app.get('/api/email/check', async (req, res) => {
      try {
     const success = await zeptoMailClient.sendMail({
       from: {
-        address: "noreply@livetaskflow.com",
-        name: "Live Task Flow",
+        address: "noreply@yatindia.com",
+        name: "Yat India",
       },
       to: [
         {

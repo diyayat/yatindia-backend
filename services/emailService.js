@@ -32,8 +32,8 @@ const sendZeptoMail = async (subject, htmlContent, toEmail = null) => {
   try {
     const success = await zeptoMailClient.sendMail({
       from: {
-        address: "noreply@livetaskflow.com",
-        name: "Live Task Flow",
+        address: "noreply@yatindia.com",
+        name: "Yat India",
       },
       to: [
         {
