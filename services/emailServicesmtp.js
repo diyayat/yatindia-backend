@@ -36,7 +36,7 @@ export const sendContactEmail = async (contactData) => {
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
     // All form submissions go to admin email - NOT to the user
-    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
+    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'info@yatindia.com';
     // Use Cloudinary logo URL if available, otherwise use public folder
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
       'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
@@ -115,7 +115,7 @@ export const sendProjectEmail = async (projectData) => {
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
     // All form submissions go to admin email - NOT to the user
-    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
+    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'info@yatindia.com';
     // Use Cloudinary logo URL if available, otherwise use public folder
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
       'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
@@ -240,7 +240,7 @@ export const sendCareerEmail = async (careerData, resumePath = null) => {
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
     // All form submissions go to admin email - NOT to the user
-    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'diya.p.shiju@gmail.com';
+    const toEmail = process.env.ZEPTOMAIL_TO_EMAIL || 'info@yatindia.com';
     // Use Cloudinary logo URL if available, otherwise use public folder
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
       'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
@@ -326,7 +326,7 @@ export const sendLeadEmail = async (leadData, leadType) => {
     }
 
     const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || process.env.ZEPTOMAIL_BOUNCE_ADDRESS || 'no-reply@yatindia.com';
-    const toEmail = 'diya.p.shiju@gmail.com';
+    const toEmail = 'info@yatindia.com';
     const logoUrl = process.env.LOGO_URL || process.env.CLOUDINARY_LOGO_URL || 
       'https://res.cloudinary.com/dxnts57kq/image/upload/v1762870110/yatindia/images/YAT_INDIA_LOGO_UPDATED_sgdocn.png' ||
       'http://localhost:4173/public/YAT INDIA LOGO UPDATED.png';

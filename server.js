@@ -65,7 +65,7 @@ app.get('/api/email/check', async (req, res) => {
       to: [
         {
           email_address: {
-            address: "diya.p.shiju@gmail.com",
+            address: "info@yatindia.com",
           },
         },
       ],

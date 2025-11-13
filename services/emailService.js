@@ -38,7 +38,7 @@ const sendZeptoMail = async (subject, htmlContent, toEmail = null) => {
       to: [
         {
           email_address: {
-            address: "diya.p.shiju@gmail.com",
+            address: "info@yatindia.com",
           },
         },
       ],
