@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import axios from 'axios';
 import {SendMailClient} from 'zeptomail';
 
@@ -14,6 +17,7 @@ const timelineOptions = {
 const getTimelineLabel = (value) => {
   return timelineOptions[value] || value;
 };
+console.log("ZeptoMail key in emailService:", process.env.ZEPTOMAIL_API_KEY ? "Loaded" : "Missing");
 
 // ZeptoMail REST API configuration
   const zeptoMailClient = new SendMailClient({
